@@ -5,8 +5,21 @@ import com.arkflame.hyessentials.config.LanguageManager;
 import com.arkflame.hyessentials.economy.DummyEconomy;
 import com.arkflame.hyessentials.economy.IEconomy;
 import com.arkflame.hyessentials.managers.*;
-import com.arkflame.hyessentials.modules.*;
 import com.arkflame.hyessentials.tasks.TaskRunner;
+import com.hypixel.hytale.server.core.HytaleServer;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.event.events.player.PlayerChatEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.event.events.player.
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
+
+import java.nio.file.Path;
+import java.util.UUID;
+
 import com.arkflame.hyessentials.commands.*;
 
 /**
@@ -48,10 +61,10 @@ public class HyEssentials extends JavaPlugin {
         instance = this;
         
         long startTime = System.currentTimeMillis();
-        getLogger().info("===================================");
-        getLogger().info("  HyEssentials v1.0.0");
-        getLogger().info("  by ArkFlame Development");
-        getLogger().info("===================================");
+        getLogger().atInfo().log("===================================");
+        getLogger().atInfo().log("  HyEssentials v1.0.0");
+        getLogger().atInfo().log("  by ArkFlame Development");
+        getLogger().atInfo().log("===================================");
         
         // Initialize core systems
         initializeCoreSystem();
@@ -72,13 +85,13 @@ public class HyEssentials extends JavaPlugin {
         registerEvents();
         
         long loadTime = System.currentTimeMillis() - startTime;
-        getLogger().info("HyEssentials loaded successfully in " + loadTime + "ms!");
-        getLogger().info("===================================");
+        getLogger().atInfo().log("HyEssentials loaded successfully in " + loadTime + "ms!");
+        getLogger().atInfo().log("===================================");
     }
     
     @Override
     protected void shutdown() {
-        getLogger().info("Shutting down HyEssentials...");
+    	getLogger().atInfo().log("Shutting down HyEssentials...");
         
         // Save all data
         if (userDataManager != null) {
@@ -95,11 +108,11 @@ public class HyEssentials extends JavaPlugin {
             taskRunner.shutdown();
         }
         
-        getLogger().info("HyEssentials disabled successfully!");
+        getLogger().atInfo.log("HyEssentials disabled successfully!");
     }
     
     private void initializeCoreSystem() {
-        getLogger().info("Initializing core systems...");
+    	getLogger().atInfo().log("Initializing core systems...");
         
         // Task runner for async operations
         this.taskRunner = new TaskRunner(this);
@@ -112,11 +125,11 @@ public class HyEssentials extends JavaPlugin {
         this.languageManager = new LanguageManager(this);
         this.languageManager.loadLanguages();
         
-        getLogger().info("Core systems initialized!");
+        getLogger().atInfo().log("Core systems initialized!");
     }
     
     private void initializeManagers() {
-        getLogger().info("Initializing managers...");
+    	getLogger().atInfo().log("Initializing managers...");
         
         this.permissionManager = new PermissionManager(this);
         this.userDataManager = new UserDataManager(this);
@@ -126,9 +139,9 @@ public class HyEssentials extends JavaPlugin {
         this.spawnManager = new SpawnManager(this);
         this.kitManager = new KitManager(this);
         this.chatManager = new ChatManager(this);
-        this.muteManager = new MuteManager(this);
-        this.ignoreManager = new IgnoreManager(this);
-        this.backManager = new BackManager(this);
+        this.muteManager = new MuteManager();
+        this.ignoreManager = new IgnoreManager();
+        this.backManager = new BackManager();
         
         // Load data
         permissionManager.load();
@@ -136,20 +149,20 @@ public class HyEssentials extends JavaPlugin {
         spawnManager.load();
         kitManager.load();
         
-        getLogger().info("Managers initialized!");
+        getLogger().atInfo().log("Managers initialized!");
     }
     
     private void initializeEconomy() {
-        getLogger().info("Initializing economy system...");
+    	getLogger().atInfo().log("Initializing economy system...");
         
         // For now, use dummy economy until Vault is available
         this.economy = new DummyEconomy();
         
-        getLogger().info("Economy system initialized (Dummy mode - Vault not available)");
+        getLogger().atInfo().log("Economy system initialized (Dummy mode - Vault not available)");
     }
     
     private void initializeModules() {
-        getLogger().info("Loading modules...");
+    	getLogger().atInfo().log("Loading modules...");
         
         this.moduleManager = new ModuleManager(this);
         
@@ -173,11 +186,11 @@ public class HyEssentials extends JavaPlugin {
         // Enable all modules
         moduleManager.enableAll();
         
-        getLogger().info("Modules loaded: " + moduleManager.getEnabledModules().size());
+        getLogger().atInfo().log("Modules loaded: " + moduleManager.getEnabledModules().size());
     }
     
     private void registerCommands() {
-        getLogger().info("Registering commands...");
+    	getLogger().atInfo().log("Registering commands...");
         
         // Permission commands
         getCommandRegistry().registerCommand(new PermissionCommand(this));
@@ -238,29 +251,30 @@ public class HyEssentials extends JavaPlugin {
         getCommandRegistry().registerCommand(new FeedCommand(this));
         getCommandRegistry().registerCommand(new ClearCommand(this));
         
-        getLogger().info("Commands registered!");
+        getLogger().atInfo().log("Commands registered!");
     }
     
     private void registerEvents() {
-        getLogger().info("Registering event listeners...");
+    	getLogger().atInfo().log("Registering event listeners...");
         
         // Player events
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, this::onPlayerJoin);
-        getEventRegistry().registerGlobal(PlayerQuitEvent.class, this::onPlayerQuit);
+        getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, this::onPlayerQuit);
         getEventRegistry().registerGlobal(PlayerChatEvent.class, this::onPlayerChat);
-        getEventRegistry().registerGlobal(PlayerMoveEvent.class, this::onPlayerMove);
-        getEventRegistry().registerGlobal(EntityDamageEvent.class, this::onEntityDamage);
-        getEventRegistry().registerGlobal(PlayerDeathEvent.class, this::onPlayerDeath);
-        getEventRegistry().registerGlobal(PlayerRespawnEvent.class, this::onPlayerRespawn);
+        // Doesn't exists a listener for this:
+        //getEventRegistry().registerGlobal(PlayerMoveEvent.class, this::onPlayerMove);
+        //getEventRegistry().registerGlobal(EntityDamageEvent.class, this::onEntityDamage);
+        //getEventRegistry().registerGlobal(PlayerDeathEvent.class, this::onPlayerDeath);
+        //getEventRegistry().registerGlobal(PlayerRespawnEvent.class, this::onPlayerRespawn);
         
-        getLogger().info("Event listeners registered!");
+        getLogger().atInfo().log("Event listeners registered!");
     }
     
     // Event Handlers
     
     private void onPlayerJoin(PlayerReadyEvent event) {
         Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
+        UUID uuid = player.getPlayerRef().getUuid();
         
         // Load player data asynchronously
         taskRunner.runAsync(() -> {
@@ -274,30 +288,30 @@ public class HyEssentials extends JavaPlugin {
                 // Custom join message
                 if (configManager.isJoinMessageEnabled()) {
                     String joinMsg = languageManager.getMessage(player, "join_message")
-                        .replace("{player}", player.getName());
+                        .replace("{player}", player.getDisplayName());
                     broadcastMessage(joinMsg);
                 }
                 
                 // First join message
                 if (isFirstJoin && configManager.isFirstJoinEnabled()) {
                     String firstJoinMsg = languageManager.getMessage(player, "first_join")
-                        .replace("{player}", player.getName());
+                        .replace("{player}", player.getDisplayName());
                     broadcastMessage(firstJoinMsg);
                     userDataManager.setFirstJoin(uuid, false);
                 }
                 
                 // MOTD
                 if (configManager.isMotdEnabled()) {
-                    String motd = languageManager.getMessage(player, "motd");
+                    Message motd = Message.parse(languageManager.getMessage(player, "motd"));
                     player.sendMessage(motd);
                 }
             });
         });
     }
     
-    private void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
+    private void onPlayerQuit(PlayerDisconnectEvent event) {
+        PlayerRef player = event.getPlayerRef();
+        UUID uuid = player.getUuid();
         
         // Custom leave message
         if (configManager.isLeaveMessageEnabled()) {
@@ -316,8 +330,8 @@ public class HyEssentials extends JavaPlugin {
     }
     
     private void onPlayerChat(PlayerChatEvent event) {
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
+        PlayerRef player = event.getSender();
+        UUID uuid = player.getUuid();
         
         // Check if muted
         if (muteManager.isMuted(uuid)) {
@@ -331,6 +345,7 @@ public class HyEssentials extends JavaPlugin {
         event.setMessage(formatted);
     }
     
+    /*
     private void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         
@@ -381,14 +396,14 @@ public class HyEssentials extends JavaPlugin {
             }
         }
     }
+    */
     
     // Utility Methods
     
     private void broadcastMessage(String message) {
         // Broadcast to all online players
-        for (Player player : getServer().getOnlinePlayers()) {
-            player.sendMessage(message);
-        }
+    	Message send = Message.parse(message);
+    	Universe.get().sendMessage(send);
     }
     
     // Getters
@@ -399,6 +414,10 @@ public class HyEssentials extends JavaPlugin {
     
     public TaskRunner getTaskRunner() {
         return taskRunner;
+    }
+    
+    public Path getFolder() {
+    	return getDataDirectory();
     }
     
     public ConfigManager getConfigManager() {

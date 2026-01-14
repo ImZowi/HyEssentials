@@ -1,8 +1,8 @@
 package com.arkflame.hyessentials.tasks;
 
-public package com.arkflame.hyessentials.tasks;
 
 import com.arkflame.hyessentials.HyEssentials;
+import com.hypixel.hytale.server.core.HytaleServer;
 
 import java.util.concurrent.*;
 
@@ -12,7 +12,8 @@ import java.util.concurrent.*;
  */
 public class TaskRunner {
     
-    private final HyEssentials plugin;
+    @SuppressWarnings("unused")
+	private final HyEssentials plugin;
     private final ScheduledExecutorService asyncExecutor;
     private final ExecutorService syncExecutor;
     private boolean useHytaleScheduler;
@@ -23,7 +24,7 @@ public class TaskRunner {
         // Try to use Hytale's built-in scheduler
         try {
             // Attempt to get Hytale's scheduler
-            this.useHytaleScheduler = plugin.getServer().getScheduler() != null;
+            this.useHytaleScheduler = HytaleServer.SCHEDULED_EXECUTOR != null;
         } catch (Exception e) {
             this.useHytaleScheduler = false;
         }
@@ -50,11 +51,11 @@ public class TaskRunner {
                 return thread;
             });
             
-            plugin.getLogger().info("Using custom thread pool for async operations");
+            plugin.getLogger().atInfo().log("Using custom thread pool for async operations");
         } else {
             this.asyncExecutor = null;
             this.syncExecutor = null;
-            plugin.getLogger().info("Using Hytale's native scheduler");
+            plugin.getLogger().atInfo().log("Using Hytale's native scheduler");
         }
     }
     
@@ -63,8 +64,7 @@ public class TaskRunner {
      */
     public CompletableFuture<Void> runAsync(Runnable task) {
         if (useHytaleScheduler) {
-            return CompletableFuture.runAsync(task, 
-                plugin.getServer().getScheduler().async());
+            return CompletableFuture.runAsync(task, HytaleServer.SCHEDULED_EXECUTOR);
         } else {
             return CompletableFuture.runAsync(task, asyncExecutor);
         }
@@ -75,7 +75,7 @@ public class TaskRunner {
      */
     public void runSync(Runnable task) {
         if (useHytaleScheduler) {
-            plugin.getServer().getScheduler().sync().execute(task);
+        	HytaleServer.SCHEDULED_EXECUTOR.execute(task);
         } else {
             syncExecutor.execute(task);
         }
@@ -86,8 +86,7 @@ public class TaskRunner {
      */
     public void runDelayed(Runnable task, long delay, TimeUnit unit) {
         if (useHytaleScheduler) {
-            plugin.getServer().getScheduler().sync()
-                .schedule(task, delay, unit);
+        	HytaleServer.SCHEDULED_EXECUTOR.schedule(task, delay, unit);
         } else {
             asyncExecutor.schedule(() -> runSync(task), delay, unit);
         }
@@ -98,8 +97,7 @@ public class TaskRunner {
      */
     public void runAsyncDelayed(Runnable task, long delay, TimeUnit unit) {
         if (useHytaleScheduler) {
-            plugin.getServer().getScheduler().async()
-                .schedule(task, delay, unit);
+        	HytaleServer.SCHEDULED_EXECUTOR.schedule(task, delay, unit);
         } else {
             asyncExecutor.schedule(task, delay, unit);
         }
@@ -110,8 +108,7 @@ public class TaskRunner {
      */
     public ScheduledFuture<?> runRepeating(Runnable task, long initialDelay, long period, TimeUnit unit) {
         if (useHytaleScheduler) {
-            return plugin.getServer().getScheduler().sync()
-                .scheduleAtFixedRate(task, initialDelay, period, unit);
+            return HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(task, initialDelay, period, unit);
         } else {
             return asyncExecutor.scheduleAtFixedRate(() -> runSync(task), initialDelay, period, unit);
         }
@@ -128,7 +125,7 @@ public class TaskRunner {
                 } catch (Exception e) {
                     throw new CompletionException(e);
                 }
-            }, plugin.getServer().getScheduler().async());
+            }, HytaleServer.SCHEDULED_EXECUTOR);
         } else {
             return CompletableFuture.supplyAsync(() -> {
                 try {
@@ -162,6 +159,4 @@ public class TaskRunner {
             }
         }
     }
-} {
-    
 }
