@@ -1,0 +1,19 @@
+{
+  "Group": "com.arkflame",
+  "Name": "HyEssentials",
+  "Version": "1.0.0",
+  "Description": "Essentials plugin for Hytale servers",
+  "Authors": [
+    {
+      "Name": "LinsaFTW",
+      "Email": "linsaftw@arkflame.com",
+      "Url": "https://discord.com/invite/gF36AT3"
+    }
+  ],
+  "Website": "https://discord.com/invite/gF36AT3",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "com.arkflame.hyessentials.HyEssentials"
+}
